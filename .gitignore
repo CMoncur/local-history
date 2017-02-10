@@ -5,3 +5,5 @@ elm-stuff/
 repl-temp-*
 
 index.html
+
+npm-debug.log
