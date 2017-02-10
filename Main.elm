@@ -19,7 +19,7 @@ type alias Model =
   }
 
 type Msg
-  = GoBack
+  = ChangeStuff Int
   | Navigate String
   | UrlChange Location
 
@@ -27,24 +27,12 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
   case msg of
-    GoBack ->
-      let
-        destination =
-          Maybe.withDefault "/notfound" ( List.head model.history )
-
-        revised_history = List.drop 1 model.history
-      in
-        { model | history = revised_history }
-        ! [ Navigation.modifyUrl destination ]
+    ChangeStuff _ ->
+      model ! [ Cmd.none ]
 
     Navigate url ->
-      case url of
-        "/transition" ->
-          model
-          ! [ Navigation.modifyUrl url ]
-        _ ->
-          { model | history = url :: model.history }
-          ! [ Navigation.newUrl url ]
+      { model | history = url :: model.history }
+      ! [ Navigation.newUrl url ]
 
     UrlChange _ ->
       model ! [ Cmd.none ]
@@ -56,8 +44,6 @@ buttons =
   , "/about"
   , "/contact"
   , "/portfolio"
-  , "/transition"
-  , "/notfound"
   ]
 
 renderButton : String -> Html Msg
@@ -76,12 +62,7 @@ view : Model -> Html Msg
 view model =
   div
     []
-    [ div
-        []
-        ( ( button
-            [ onClick GoBack ]
-            [ text "Go Back" ]
-        ) :: ( List.map renderButton buttons ) )
+    [ div [] ( List.map renderButton buttons )
     , br [] []
     , text <| renderHistory model.history
     ]
