@@ -19,7 +19,7 @@ type alias Model =
   }
 
 type Msg
-  = ChangeStuff Int
+  = GoBack
   | Navigate String
   | UrlChange Location
 
@@ -27,7 +27,7 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
   case msg of
-    ChangeStuff _ ->
+    GoBack ->
       model ! [ Cmd.none ]
 
     Navigate url ->
