@@ -3,23 +3,25 @@ module Main exposing ( main )
 -- Core Dependencies
 import Html exposing
   ( Html
+  , br
+  , button
   , div
   , text
   )
+import Html.Events exposing ( onClick )
 
 -- Package Dependencies
 import Navigation as Navigation exposing ( Location )
-import UrlParser as Url
 
 -- Model/Msg Types
 type alias Model =
-  { stuff   : Int
-  , history : List String
+  { history : List String
   }
 
 type Msg
   = ChangeStuff Int
-  | ChangeUrl Location
+  | Navigate String
+  | UrlChange Location
 
 -- Update Function
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -28,21 +30,42 @@ update msg model =
     ChangeStuff _ ->
       model ! [ Cmd.none ]
 
-    ChangeUrl _ ->
+    Navigate url ->
+      { model | history = url :: model.history }
+      ! [ Navigation.newUrl url ]
+
+    UrlChange _ ->
       model ! [ Cmd.none ]
 
--- View Function
+-- View Functions
+buttons : List String
+buttons =
+  [ "/landing"
+  , "/about"
+  , "/contact"
+  , "/portfolio"
+  ]
+
+renderButton : String -> Html Msg
+renderButton button_text =
+  button
+    [ onClick ( Navigate button_text ) ]
+    [ text <| String.dropLeft 1 button_text ]
+
+renderHistory : List String -> String
+renderHistory history =
+  history
+    |> List.map (\ hs -> String.dropLeft 1 hs )
+    |> String.join ", "
+
 view : Model -> Html Msg
 view model =
   div
     []
-    [ text "hey"
+    [ div [] ( List.map renderButton buttons )
+    , br [] []
+    , text <| renderHistory model.history
     ]
-
--- Supporting Functions
-subscriptions : Model -> Sub Msg
-subscriptions model =
-  Sub.none
 
 -- Init Function
 init : Location -> ( Model, Cmd Msg )
@@ -53,16 +76,15 @@ init location =
 
 initModel : Model
 initModel =
-  { stuff   = 0
-  , history = []
+  { history = []
   }
 
 -- Elm Main
 main : Program Never Model Msg
 main =
-  Navigation.program ChangeUrl
+  Navigation.program UrlChange
     { init          = init
-    , subscriptions = subscriptions
+    , subscriptions = (\ _ -> Sub.none )
     , update        = update
     , view          = view
     }
