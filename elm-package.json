@@ -1,7 +1,7 @@
 {
     "version": "1.0.0",
     "summary": "A package for managing model state history within Elm.",
-    "repository": "https://github.com/cmoncur/elm-history.git",
+    "repository": "https://github.com/cmoncur/local-history.git",
     "license": "BSD3",
     "source-directories": [
         "src"
