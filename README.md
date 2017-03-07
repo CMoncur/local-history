@@ -1,2 +1,2 @@
-# elm-history
-A method of maintaining history and model state within Elm
+# local-history
+A method of maintaining history and model state within Elm via SessionStorage
