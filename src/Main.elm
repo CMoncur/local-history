@@ -43,11 +43,19 @@ update msg model =
         ! [ Navigation.modifyUrl fresh_model.current.route ]
 
     Navigate url ->
-      History.push
-        { model     = model
-        , revisions = { m | route = url }
-        , url       = url
-        }
+      -- case url of
+      --   "/transition" ->
+      --     History.revise
+      --       { model     = model
+      --       , revisions = m
+      --       , url       = url
+      --       }
+      --   _ ->
+        History.push
+          { model     = model
+          , revisions = { m | route = url }
+          , url       = url
+          }
 
     UrlChange _ ->
       model ! [ Cmd.none ]
@@ -55,7 +63,7 @@ update msg model =
 -- View Functions
 buttons : List String
 buttons =
-  [ "/"
+  [ "/home"
   , "/about"
   , "/contact"
   , "/portfolio"

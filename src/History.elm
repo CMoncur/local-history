@@ -8,7 +8,7 @@ module History exposing
   )
 
 {-|
-# Primitives
+# Types
 @docs Entry, History
 
 # Utilities
@@ -18,8 +18,8 @@ module History exposing
 -- Core Dependencies
 import Navigation as Nav
 
-{-| Entry item type, where `a` represents route and
-`b` represents a model or similar record to store.
+{-| Entry item type, where `a` represents the base
+model to be revised and stored within the history
 -}
 type alias Entry a =
   { model     : History a
@@ -27,17 +27,17 @@ type alias Entry a =
   , url       : String
   }
 
-{-| History item type, where `a` represents route and
-`b` represents a model or similar record to store.
+{-| History data type, where `a` represents the base
+model or record that will be recorded.
 -}
 type alias History a =
   { current : a
   , history : List a
   }
 
-{-| Subscribe to browser's onPopState event
+{-| Reverts model back to the it's most recent state.
 
-    pack yeah == "yeah"
+    History.back model
 -}
 back : History a -> History a
 back model =
@@ -53,9 +53,18 @@ back model =
     , current = recent
     }
 
-{-| Subscribe to browser's onPopState event
+{-| Creates an inital model which includes the
+history list and initial state of base model. Can
+simply wrap an init function.
 
-    pack yeah == "yeah"
+    main : Program Never Model Msg
+    main =
+      Navigation.program UrlChange
+        { init = ( History.init initModel, Cmd.none )
+        , subscriptions = (\ _ -> Sub.none )
+        , update = update
+        , view = view
+        }
 -}
 init : a -> History a
 init initial_state =
@@ -63,9 +72,14 @@ init initial_state =
   , current = initial_state
   }
 
-{-| Subscribe to browser's onPopState event
+{-| Updates the model and logs the new model
+state as a history entry.
 
-    pack yeah == "yeah"
+    History.push
+      { model     = model
+      , revisions = { m | route = url }
+      , url       = url
+      }
 -}
 push : Entry a -> ( History a, Cmd msg )
 push entry =
@@ -78,22 +92,31 @@ push entry =
     }
     ! [ Nav.newUrl entry.url ]
 
-{-| Subscribe to browser's onPopState event
+{-| Revise the model without logging the model
+as a history entry.
 
-    pack yeah == "yeah"
+    History.revise
+      { model     = model
+      , revisions = { m | route = url }
+      , url       = url
+      }
 -}
-revise : History a -> a -> History a
-revise model revisions =
-  { model | current = revisions }
+revise : Entry a -> ( History a, Cmd msg )
+revise entry =
+  let
+    m = entry.model
+  in
+    { m | current = entry.revisions }
+    ! [ Nav.modifyUrl entry.url ]
 
 
 {-------------------------------}
 {--- Private Functions ---------}
 {-------------------------------}
 
-{-| Subscribe to browser's onPopState event
+{-| Return a list with one less history entry.
 
-    pack yeah == "yeah"
+    remaining [ a, b ] == [ b ]
 -}
 remaining : List a -> List a
 remaining history =
