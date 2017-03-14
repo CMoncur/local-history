@@ -14,6 +14,7 @@ import Html.Events exposing ( onClick )
 -- Package Dependencies
 import History exposing ( History )
 import Navigation exposing ( Location )
+import Task
 
 -- Model/Msg Types
 type alias Base =
@@ -26,6 +27,7 @@ type Msg
   = GoBack
   | Navigate String
   | UrlChange Location
+  | Yeah String
 
 -- History Functions
 
@@ -43,22 +45,22 @@ update msg model =
         ! [ Navigation.modifyUrl fresh_model.current.route ]
 
     Navigate url ->
-      -- case url of
-      --   "/transition" ->
-      --     History.revise
-      --       { model     = model
-      --       , revisions = m
-      --       , url       = url
-      --       }
-      --   _ ->
-        History.push
-          { model     = model
-          , revisions = { m | route = url }
-          , url       = url
-          }
+      -- History.push
+      --   { model     = model
+      --   , revisions = { m | route = url }
+      --   , url       = url
+      --   }
+      model !
+      [ Task.perform Yeah ( History.yeah model ) ]
 
     UrlChange _ ->
       model ! [ Cmd.none ]
+
+    Yeah str ->
+      let
+        yeah = Debug.log "yeah succeeded" str
+      in
+        model ! [ Cmd.none ]
 
 -- View Functions
 buttons : List String
