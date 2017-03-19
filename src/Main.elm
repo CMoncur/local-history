@@ -27,7 +27,7 @@ type Msg
   = GoBack
   | Navigate String
   | UrlChange Location
-  | Yeah String
+  | Saved
 
 -- History Functions
 
@@ -45,20 +45,14 @@ update msg model =
         ! [ Navigation.modifyUrl fresh_model.current.route ]
 
     Navigate url ->
-      -- History.push
-      --   { model     = model
-      --   , revisions = { m | route = url }
-      --   , url       = url
-      --   }
-      model !
-      [ Task.perform Yeah ( History.yeah model ) ]
+      History.push model Saved
 
     UrlChange _ ->
       model ! [ Cmd.none ]
 
-    Yeah str ->
+    Saved ->
       let
-        yeah = Debug.log "yeah succeeded" str
+        yeah = Debug.log "save succeeded" model
       in
         model ! [ Cmd.none ]
 

@@ -5,7 +5,6 @@ module History exposing
   , init
   , push
   , revise
-  , yeah
   )
 
 {-|
@@ -13,13 +12,12 @@ module History exposing
 @docs Entry, History
 
 # Utilities
-@docs back, init, push, revise, yeah
+@docs back, init, push, revise
 -}
 
 -- Core Dependencies
 import Navigation as Nav
-import Platform exposing ( Task )
-import Task exposing ( andThen, succeed, fail )
+import Task
 
 -- Local Dependencies
 import Native.History as Native
@@ -79,7 +77,7 @@ init initial_state =
   }
 
 {-| Updates the model and logs the new model
-state as a history entry.
+state as a session storage entry.
 
     History.push
       { model     = model
@@ -87,29 +85,12 @@ state as a history entry.
       , url       = url
       }
 -}
-push : Entry a -> ( History a, Cmd msg )
-push entry =
-  let
-    m = entry.model
-  in
-    { m
-    | history = m.current :: m.history
-    , current = entry.revisions
-    }
-    ! [ Nav.newUrl entry.url ]
-
-{-| Updates the model and logs the new model
-state as a history entry.
-
-    History.push
-      { model     = model
-      , revisions = { m | route = url }
-      , url       = url
-      }
--}
-yeah : History a -> Task x String
-yeah model =
-  Native.yeah model
+push : History a -> msg -> ( History a, Cmd msg )
+push model msg =
+  model !
+  [ Native.push 1 model
+      |> Task.perform (\ _ -> msg )
+  ]
 
 {-| Revise the model without logging the model
 as a history entry.
