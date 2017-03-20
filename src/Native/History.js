@@ -1,9 +1,9 @@
 var _cmoncur$local_history$Native = function() {
-  function get(key) {
+  function get(key, stuff) {
     return _elm_lang$core$Native_Scheduler
     .nativeBinding(function(callback) {
       var raw   = sessionStorage.getItem(key),
-          stuff = raw ? JSON.parse(raw) : null;
+          stuff = raw ? JSON.parse(raw) : stuff;
       callback(_elm_lang$core$Native_Scheduler.succeed(stuff));
     });
   }
@@ -25,7 +25,7 @@ var _cmoncur$local_history$Native = function() {
   }
 
   return {
-    get    : get,
+    get    : F2(get),
     push   : F2(push),
     remove : remove
   }

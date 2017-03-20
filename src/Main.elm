@@ -16,6 +16,7 @@ import History exposing ( History )
 import Navigation exposing ( Location )
 import Task
 
+
 -- Model/Msg Types
 type alias Base =
   { route : String
@@ -25,11 +26,10 @@ type alias Model = History Base
 
 type Msg
   = GoBack
-  | Navigate String
-  | UrlChange Location
-  | Saved
-
--- History Functions
+  | Navigate   String
+  | Restored   Model
+  | Saved      Int
+  | UrlChange  Location
 
 
 -- Update Function
@@ -38,23 +38,26 @@ update msg model =
   let m = model.current in
   case msg of
     GoBack ->
-      let
-        fresh_model = History.back model
-      in
-        fresh_model
-        ! [ Navigation.modifyUrl fresh_model.current.route ]
+      History.back model Restored
 
     Navigate url ->
       History.push model Saved
 
+    Restored backup ->
+      let
+        yeah = Debug.log "restore succeeded" backup
+      in
+        backup ! [ Cmd.none ]
+
+    Saved key ->
+      let
+        yeah = Debug.log "save succeeded" key
+      in
+        model ! [ Cmd.none ]
+
     UrlChange _ ->
       model ! [ Cmd.none ]
 
-    Saved ->
-      let
-        yeah = Debug.log "save succeeded" model
-      in
-        model ! [ Cmd.none ]
 
 -- View Functions
 buttons : List String
@@ -107,6 +110,7 @@ initModel : Base
 initModel =
   { route = "/"
   }
+
 
 -- Elm Main
 main : Program Never Model Msg

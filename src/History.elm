@@ -43,19 +43,27 @@ type alias History a =
 
     History.back model
 -}
-back : History a -> History a
-back model =
+back : History a
+  -> ( History a -> msg )
+  -> ( History a, Cmd msg )
+back model msg =
   let
-    recent = Maybe.withDefault
-      model.current
-      ( List.head model.history )
-
-    remainder =
-      remaining model.history
+    cmd =
+      Native.get 1 model
+        |> Task.perform msg
   in
-    { history = remainder
-    , current = recent
-    }
+    model ! [ cmd ]
+  -- let
+  --   recent = Maybe.withDefault
+  --     model.current
+  --     ( List.head model.history )
+  --
+  --   remainder =
+  --     remaining model.history
+  -- in
+  --   { history = remainder
+  --   , current = recent
+  --   }
 
 {-| Creates an inital model which includes the
 history list and initial state of base model. Can
@@ -79,18 +87,18 @@ init initial_state =
 {-| Updates the model and logs the new model
 state as a session storage entry.
 
-    History.push
-      { model     = model
-      , revisions = { m | route = url }
-      , url       = url
-      }
+    History.push model Saved
 -}
-push : History a -> msg -> ( History a, Cmd msg )
+push : History a
+  -> ( Int -> msg )
+  -> ( History a, Cmd msg )
 push model msg =
-  model !
-  [ Native.push 1 model
-      |> Task.perform (\ _ -> msg )
-  ]
+  let
+    cmd =
+      Native.push 1 model
+        |> Task.perform msg
+  in
+    model ! [ cmd ]
 
 {-| Revise the model without logging the model
 as a history entry.
