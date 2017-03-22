@@ -35,13 +35,12 @@ type Msg
 -- Update Function
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-  let m = model.current in
   case msg of
     GoBack ->
       History.back model Restored
 
     Navigate url ->
-      History.push model Saved
+      History.push model url Saved
 
     Restored backup ->
       let
@@ -78,7 +77,7 @@ renderButton button_text =
 
 renderHistory : Model -> Html Msg
 renderHistory model =
-  div [] ( List.map renderHistoryItem model.history )
+  div [] [ text <| toString model ]
 
 renderHistoryItem : Base -> Html Msg
 renderHistoryItem m =
@@ -102,15 +101,15 @@ view model =
 -- Init Function
 init : Location -> ( Model, Cmd Msg )
 init location =
-  ( History.init initModel
+  ( initModel
   , Cmd.none
   )
 
-initModel : Base
+initModel : Model
 initModel =
   { route = "/"
+  , local_history = ( 0, [] )
   }
-
 
 -- Elm Main
 main : Program Never Model Msg

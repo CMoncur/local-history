@@ -1,18 +1,16 @@
 module History exposing
-  ( Entry
-  , History
+  ( History
   , back
-  , init
   , push
   , revise
   )
 
 {-|
 # Types
-@docs Entry, History
+@docs History
 
 # Utilities
-@docs back, init, push, revise
+@docs back, push, revise
 -}
 
 -- Core Dependencies
@@ -22,21 +20,12 @@ import Task
 -- Local Dependencies
 import Native.History as Native
 
-{-| Entry item type, where `a` represents the base
-model to be revised and stored within the history
--}
-type alias Entry a =
-  { model     : History a
-  , revisions : a
-  , url       : String
-  }
-
 {-| History data type, where `a` represents the base
 model or record that will be recorded.
 -}
 type alias History a =
-  { current : a
-  , history : List a
+  { a
+  | local_history : ( Int, List Int )
   }
 
 {-| Reverts model back to the it's most recent state.
@@ -53,69 +42,35 @@ back model msg =
         |> Task.perform msg
   in
     model ! [ cmd ]
-  -- let
-  --   recent = Maybe.withDefault
-  --     model.current
-  --     ( List.head model.history )
-  --
-  --   remainder =
-  --     remaining model.history
-  -- in
-  --   { history = remainder
-  --   , current = recent
-  --   }
-
-{-| Creates an inital model which includes the
-history list and initial state of base model. Can
-simply wrap an init function.
-
-    main : Program Never Model Msg
-    main =
-      Navigation.program UrlChange
-        { init = ( History.init initModel, Cmd.none )
-        , subscriptions = (\ _ -> Sub.none )
-        , update = update
-        , view = view
-        }
--}
-init : a -> History a
-init initial_state =
-  { history = []
-  , current = initial_state
-  }
 
 {-| Updates the model and logs the new model
 state as a session storage entry.
 
-    History.push model Saved
+    History.push model url Saved
 -}
 push : History a
+  -> String
   -> ( Int -> msg )
   -> ( History a, Cmd msg )
-push model msg =
+push model url msg =
   let
     cmd =
       Native.push 1 model
         |> Task.perform msg
   in
-    model ! [ cmd ]
+    model !
+    [ cmd
+    , Nav.newUrl url
+    ]
 
 {-| Revise the model without logging the model
 as a history entry.
 
-    History.revise
-      { model     = model
-      , revisions = { m | route = url }
-      , url       = url
-      }
+    History.revise model url
 -}
-revise : Entry a -> ( History a, Cmd msg )
-revise entry =
-  let
-    m = entry.model
-  in
-    { m | current = entry.revisions }
-    ! [ Nav.modifyUrl entry.url ]
+revise : History a -> String -> ( History a, Cmd msg )
+revise model url =
+  model ! [ Nav.modifyUrl url ]
 
 
 {-------------------------------}
