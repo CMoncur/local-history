@@ -1,6 +1,7 @@
 module History exposing
   ( History
   , back
+  , cache
   , push
   , revise
   )
@@ -9,8 +10,11 @@ module History exposing
 # Types
 @docs History
 
-# Utilities
+# Session Storage Utilities
 @docs back, push, revise
+
+# Local Storage Utilities
+@docs cache
 -}
 
 -- Core Dependencies
@@ -25,7 +29,8 @@ model or record that will be recorded.
 -}
 type alias History a =
   { a
-  | local_history : ( Int, List Int )
+  | local_history   : ( Maybe String, List String )
+  , session_history : ( Maybe String, List String )
   }
 
 {-| Reverts model back to the it's most recent state.
@@ -44,7 +49,35 @@ back model msg =
     model ! [ cmd ]
 
 {-| Updates the model and logs the new model
-state as a session storage entry.
+state as a local storage entry. Also navigates
+to supplied URL.
+
+    History.push model url Saved
+-}
+cache : History a
+  -> String
+  -> ( Int -> msg )
+  -> ( History a, Cmd msg )
+cache model url msg =
+  let
+    history =
+      Tuple.second model.local_history
+
+    key =
+      getKey True history
+
+    cmd =
+      Native.push key model True
+        |> Task.perform msg
+  in
+    model !
+    [ cmd
+    , Nav.newUrl url
+    ]
+
+{-| Updates the model and logs the new model
+state as a session storage entry. Also navigates
+to supplied URL.
 
     History.push model url Saved
 -}
@@ -54,8 +87,14 @@ push : History a
   -> ( History a, Cmd msg )
 push model url msg =
   let
+    history =
+      Tuple.second model.session_history
+
+    key =
+      getKey False history
+
     cmd =
-      Native.push 1 model
+      Native.push key model False
         |> Task.perform msg
   in
     model !
@@ -77,14 +116,25 @@ revise model url =
 {--- Private Functions ---------}
 {-------------------------------}
 
-{-| Return a list with one less history entry.
+{-| Return a string that represents the key of the
+local or session storage entry.
 
-    remaining [ a, b ] == [ b ]
+    getKey False [] == "session_history_1"
 -}
-remaining : List a -> List a
-remaining history =
-  case history of
-    []       -> []
-    [ a ]    -> []
-    [ a, b ] -> [ b ]
-    a :: b   -> b
+getKey : Bool -> List String -> String
+getKey persistent history =
+  let
+    len_str : List String -> String
+    len_str list =
+      toString <| List.length list
+  in
+    if persistent then
+      String.concat
+        [ "local_history_"
+        , len_str history
+        ]
+    else
+      String.concat
+        [ "session_history_"
+        , len_str history
+        ]

@@ -79,10 +79,6 @@ renderHistory : Model -> Html Msg
 renderHistory model =
   div [] [ text <| toString model ]
 
-renderHistoryItem : Base -> Html Msg
-renderHistoryItem m =
-  p [] [ text <| toString m ]
-
 view : Model -> Html Msg
 view model =
   div
@@ -107,9 +103,11 @@ init location =
 
 initModel : Model
 initModel =
-  { route = "/"
-  , local_history = ( 0, [] )
+  { route           = "/"
+  , local_history   = ( Nothing, [] )
+  , session_history = ( Nothing, [] )
   }
+
 
 -- Elm Main
 main : Program Never Model Msg
