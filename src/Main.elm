@@ -42,10 +42,10 @@ update msg model =
     Navigate url ->
       case url of
         "/transition" ->
-          History.revise { model | route = url } url
+          History.revise { model | route = url }
 
         _ ->
-          History.push { model | route = url } url Saved
+          History.push { model | route = url } Saved
 
     Restored backup ->
       let
@@ -82,7 +82,13 @@ renderButton button_text =
 
 renderHistory : Model -> Html Msg
 renderHistory model =
-  div [] [ text <| toString model ]
+  div
+    []
+    [ p [] [ text <| "Back: " ++ ( toString model.session_back ) ]
+    , p [] [ text <| "Current: " ++ ( toString model.session_current ) ]
+    , p [] [ text <| "History: " ++ ( toString model.session_history ) ]
+    , p [] [ text <| "Next: " ++ ( toString model.session_next ) ]
+    ]
 
 view : Model -> Html Msg
 view model =
@@ -109,8 +115,14 @@ init location =
 initModel : Model
 initModel =
   { route           = "/"
-  , local_history   = ( Nothing, [] )
-  , session_history = ( Nothing, [] )
+  , local_back      = []
+  , local_current   = 0
+  , local_history   = []
+  , local_next      = []
+  , session_back    = []
+  , session_current = 0
+  , session_history = []
+  , session_next    = []
   }
 
 

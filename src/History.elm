@@ -55,17 +55,18 @@ back model msg =
       getSessionState model
   in
     { model
-    | session_back = remainder
-    , session_next = next
+    | session_back    = remainder
+    , session_current = key
+    , session_next    = cur :: next
     } !
-    [ Native.get key model
+    [ Native.get key model False
       |> Task.perform msg
     ]
 
 {-| Updates the model and logs the new model
 state as a session storage entry.
 
-    History.push model url Saved
+    History.push model Saved
 -}
 push : History a
   -> ( Int -> msg )
@@ -79,10 +80,10 @@ push model msg =
       getSessionState model
   in
     { model
-    | session_back = key :: back
+    | session_back    = key :: back
     , session_current = key
     , session_history = key :: hist
-    , session_next = []
+    , session_next    = []
     } !
     [ Native.push key model False
       |> Task.perform msg
@@ -97,27 +98,16 @@ pushLocal : History a
   -> ( Int -> msg )
   -> ( History a, Cmd msg )
 pushLocal model msg =
-  let
-    key =
-      ( List.length model.local_history )
-  in
-    { model
-    | local_back =
-        key :: model.local_back
-    , local_next = []
-    } !
-    [ Native.push key model True
-      |> Task.perform msg
-    ]
+  ( model, Cmd.none )
 
 {-| Revise the model without logging the model
 as a history entry.
 
-    History.revise model url
+    History.revise model
 -}
-revise : History a -> String -> ( History a, Cmd msg )
-revise model url =
-  model ! [ Nav.modifyUrl url ]
+revise : History a -> ( History a, Cmd msg )
+revise model =
+  ( model, Cmd.none )
 
 
 {-------------------------------}
