@@ -40,7 +40,12 @@ update msg model =
       History.back model Restored
 
     Navigate url ->
-      History.push model url Saved
+      case url of
+        "/transition" ->
+          History.revise { model | route = url } url
+
+        _ ->
+          History.push { model | route = url } url Saved
 
     Restored backup ->
       let

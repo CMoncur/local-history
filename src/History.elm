@@ -30,7 +30,7 @@ model or record that will be recorded.
 type alias History a =
   { a
   | local_history   : ( Maybe String, List String )
-  , session_history : ( Maybe String, List String )
+  , session_history : ( Maybe Int, List Int )
   }
 
 {-| Reverts model back to the it's most recent state.
@@ -42,6 +42,9 @@ back : History a
   -> ( History a, Cmd msg )
 back model msg =
   let
+    ( current, history ) =
+      model.session_history
+
     cmd =
       Native.get 1 model
         |> Task.perform msg
@@ -49,31 +52,26 @@ back model msg =
     model ! [ cmd ]
 
 {-| Updates the model and logs the new model
-state as a local storage entry. Also navigates
-to supplied URL.
+state as a local storage entry.
 
-    History.push model url Saved
+    History.cache model Cached
 -}
 cache : History a
-  -> String
-  -> ( Int -> msg )
+  -> ( String -> msg )
   -> ( History a, Cmd msg )
-cache model url msg =
+cache model msg =
   let
     history =
       Tuple.second model.local_history
 
     key =
-      getKey True history
+      getLocalKey True history
 
     cmd =
       Native.push key model True
         |> Task.perform msg
   in
-    model !
-    [ cmd
-    , Nav.newUrl url
-    ]
+    model ! [ cmd ]
 
 {-| Updates the model and logs the new model
 state as a session storage entry. Also navigates
@@ -91,13 +89,17 @@ push model url msg =
       Tuple.second model.session_history
 
     key =
-      getKey False history
+      ( List.length history ) + 1
 
     cmd =
       Native.push key model False
         |> Task.perform msg
   in
-    model !
+    { model | session_history =
+      ( Just key
+      , key :: history
+      )
+    } !
     [ cmd
     , Nav.newUrl url
     ]
@@ -117,24 +119,18 @@ revise model url =
 {-------------------------------}
 
 {-| Return a string that represents the key of the
-local or session storage entry.
+local storage entry.
 
-    getKey False [] == "session_history_1"
+    getLocalKey True [] == "local_history_1"
 -}
-getKey : Bool -> List String -> String
-getKey persistent history =
+getLocalKey : Bool -> List String -> String
+getLocalKey persistent history =
   let
     len_str : List String -> String
     len_str list =
       toString <| List.length list
   in
-    if persistent then
-      String.concat
-        [ "local_history_"
-        , len_str history
-        ]
-    else
-      String.concat
-        [ "session_history_"
-        , len_str history
-        ]
+    String.concat
+      [ "local_history_"
+      , len_str history
+      ]
