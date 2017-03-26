@@ -5,8 +5,8 @@ var _cmoncur$local_history$Native = function() {
       var raw   = persistent
                     ? localStorage.getItem(key)
                     : sessionStorage.getItem(key)
-        , stuff = raw ? JSON.parse(raw) : stuff;
-      callback(_elm_lang$core$Native_Scheduler.succeed(stuff));
+        , fresh = raw ? JSON.parse(raw) : stuff;
+      callback(_elm_lang$core$Native_Scheduler.succeed(fresh));
     });
   }
 

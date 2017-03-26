@@ -1,8 +1,8 @@
 module History exposing
   ( History
   , back
-  , cache
   , push
+  , pushLocal
   , revise
   )
 
@@ -14,11 +14,10 @@ module History exposing
 @docs back, push, revise
 
 # Local Storage Utilities
-@docs cache
+@docs pushLocal
 -}
 
 -- Core Dependencies
-import Navigation as Nav
 import Task
 
 -- Local Dependencies
@@ -29,11 +28,18 @@ model or record that will be recorded.
 -}
 type alias History a =
   { a
-  | local_history   : ( Maybe String, List String )
-  , session_history : ( Maybe Int, List Int )
+  | local_back      : List Int
+  , local_current   : Int
+  , local_history   : List Int
+  , local_next      : List Int
+  , session_back    : List Int
+  , session_current : Int
+  , session_history : List Int
+  , session_next    : List Int
   }
 
-{-| Reverts model back to the it's most recent state.
+{-| Reverts model or record back to the it's most
+recent state.
 
     History.back model
 -}
@@ -42,66 +48,66 @@ back : History a
   -> ( History a, Cmd msg )
 back model msg =
   let
-    ( current, history ) =
-      model.session_history
+    ( key, remainder ) =
+      getBack model.session_back
 
-    cmd =
-      Native.get 1 model
-        |> Task.perform msg
+    ( back, cur, hist, next ) =
+      getSessionState model
   in
-    model ! [ cmd ]
+    { model
+    | session_back = remainder
+    , session_next = next
+    } !
+    [ Native.get key model
+      |> Task.perform msg
+    ]
 
 {-| Updates the model and logs the new model
-state as a local storage entry.
-
-    History.cache model Cached
--}
-cache : History a
-  -> ( String -> msg )
-  -> ( History a, Cmd msg )
-cache model msg =
-  let
-    history =
-      Tuple.second model.local_history
-
-    key =
-      getLocalKey True history
-
-    cmd =
-      Native.push key model True
-        |> Task.perform msg
-  in
-    model ! [ cmd ]
-
-{-| Updates the model and logs the new model
-state as a session storage entry. Also navigates
-to supplied URL.
+state as a session storage entry.
 
     History.push model url Saved
 -}
 push : History a
-  -> String
   -> ( Int -> msg )
   -> ( History a, Cmd msg )
-push model url msg =
+push model msg =
   let
-    history =
-      Tuple.second model.session_history
-
     key =
-      ( List.length history ) + 1
+      ( List.length model.session_history )
 
-    cmd =
-      Native.push key model False
-        |> Task.perform msg
+    ( back, _, hist, _ ) =
+      getSessionState model
   in
-    { model | session_history =
-      ( Just key
-      , key :: history
-      )
+    { model
+    | session_back = key :: back
+    , session_current = key
+    , session_history = key :: hist
+    , session_next = []
     } !
-    [ cmd
-    , Nav.newUrl url
+    [ Native.push key model False
+      |> Task.perform msg
+    ]
+
+{-| Updates the model and logs the new model
+state as a local storage entry.
+
+    History.pushCache model Cached
+-}
+pushLocal : History a
+  -> ( Int -> msg )
+  -> ( History a, Cmd msg )
+pushLocal model msg =
+  let
+    key =
+      ( List.length model.local_history )
+  in
+    { model
+    | local_back =
+        key :: model.local_back
+    , local_next = []
+    } !
+    [ Native.push key model True
+      |> Task.perform msg
     ]
 
 {-| Revise the model without logging the model
@@ -118,19 +124,28 @@ revise model url =
 {--- Private Functions ---------}
 {-------------------------------}
 
-{-| Return a string that represents the key of the
-local storage entry.
+{-| Helper function that returns an integer
+representing the key of the storage entry.
 
-    getLocalKey True [] == "local_history_1"
+    getBack [1, 2, 3] == 1
 -}
-getLocalKey : Bool -> List String -> String
-getLocalKey persistent history =
-  let
-    len_str : List String -> String
-    len_str list =
-      toString <| List.length list
-  in
-    String.concat
-      [ "local_history_"
-      , len_str history
-      ]
+getBack : List Int -> ( Int, List Int )
+getBack back =
+  case back of
+    []      -> ( 0, [] )
+    [ a ]   -> ( a, [] )
+    a :: b  -> ( a, b )
+
+{-| Helper function that returns each session
+value as items within a tuple.
+
+    getSessionState model == ( [], 0, [], [] )
+-}
+getSessionState : History a
+  -> ( List Int, Int, List Int, List Int )
+getSessionState model =
+  ( model.session_back
+  , model.session_current
+  , model.session_history
+  , model.session_next
+  )
