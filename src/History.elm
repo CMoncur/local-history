@@ -61,6 +61,8 @@ back model msg =
     } !
     [ Native.get key model False
       |> Task.perform msg
+      -- |> Task.andThen (succeed edit model with updated
+      -- history information)
     ]
 
 {-| Updates the model and logs the new model
