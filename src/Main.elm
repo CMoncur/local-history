@@ -82,13 +82,17 @@ renderButton button_text =
 
 renderHistory : Model -> Html Msg
 renderHistory model =
-  div
-    []
-    [ p [] [ text <| "Back: " ++ ( toString model.session_back ) ]
-    , p [] [ text <| "Current: " ++ ( toString model.session_current ) ]
-    , p [] [ text <| "History: " ++ ( toString model.session_history ) ]
-    , p [] [ text <| "Next: " ++ ( toString model.session_next ) ]
-    ]
+  let
+    hist =
+      model.local_history
+  in
+    div
+      []
+      [ p [] [ text <| "Back: " ++ ( toString hist.session_back ) ]
+      , p [] [ text <| "Current: " ++ ( toString hist.session_current ) ]
+      , p [] [ text <| "History: " ++ ( toString hist.session_history ) ]
+      , p [] [ text <| "Next: " ++ ( toString hist.session_next ) ]
+      ]
 
 view : Model -> Html Msg
 view model =
@@ -114,15 +118,8 @@ init location =
 
 initModel : Model
 initModel =
-  { route           = "/"
-  , local_back      = []
-  , local_current   = 0
-  , local_history   = []
-  , local_next      = []
-  , session_back    = []
-  , session_current = 0
-  , session_history = []
-  , session_next    = []
+  { route         = "/"
+  , local_history = History.init
   }
 
 
