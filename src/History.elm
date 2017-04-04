@@ -4,7 +4,6 @@ module History exposing
   , back
   , init
   , push
-  , pushLocal
   , revise
   )
 
@@ -15,9 +14,6 @@ module History exposing
 
 # Session Storage Utilities
 @docs back, init, push, revise
-
-# Local Storage Utilities
-@docs pushLocal
 -}
 
 -- Core Dependencies
@@ -63,7 +59,7 @@ back model msg =
       getBack model.local_history.session_back
 
     fresh_model =
-      historyBack model key remainder
+      historyBack model remainder
   in
     fresh_model !
     [ Native.get key model False
@@ -112,17 +108,6 @@ push model msg =
       |> Task.perform msg
     ]
 
-{-| Updates the model and logs the new model
-state as a local storage entry.
-
-    History.pushCache model Cached
--}
-pushLocal : History a
-  -> ( Int -> msg )
-  -> ( History a, Cmd msg )
-pushLocal model msg =
-  ( model, Cmd.none )
-
 {-| Revise the model without logging the model
 as a history entry.
 
@@ -163,13 +148,15 @@ getSessionState base =
 been restored from session storage
 -}
 historyBack : History a
-  -> Int
   -> List Int
   -> History a
-historyBack model key remainder =
+historyBack model remainder =
   let
     history =
       model.local_history
+
+    fresh_current =
+      Maybe.withDefault 0 ( List.head remainder )
 
     ( _, cur, _, next ) =
       getSessionState model.local_history
@@ -177,7 +164,7 @@ historyBack model key remainder =
     fresh_history =
       { history
       | session_back    = remainder
-      , session_current = key
+      , session_current = fresh_current
       , session_next    = cur :: next
       }
   in
