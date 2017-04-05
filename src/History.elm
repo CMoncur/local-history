@@ -27,14 +27,10 @@ import Native.History as Native
 leverages.
 -}
 type alias Base =
-  { local_back      : List Int
-  , local_current   : Int
-  , local_history   : List Int
-  , local_next      : List Int
-  , session_back    : List Int
-  , session_current : Int
-  , session_history : List Int
-  , session_next    : List Int
+  { back    : List Int
+  , current : Int
+  , history : List Int
+  , next    : List Int
   }
 
 {-| History data type, where `a` represents the base
@@ -56,7 +52,7 @@ back : History a
 back model msg =
   let
     ( key, remainder ) =
-      getBack model.local_history.session_back
+      getBack model.local_history.back
 
     fresh_model =
       historyBack model remainder
@@ -74,14 +70,10 @@ local_history package relies upon
 -}
 init : Base
 init =
-  { local_back      = []
-  , local_current   = 0
-  , local_history   = []
-  , local_next      = []
-  , session_back    = []
-  , session_current = 0
-  , session_history = []
-  , session_next    = []
+  { back    = []
+  , current = 0
+  , history = []
+  , next    = []
   }
 
 {-| Updates the model and logs the new model
@@ -98,7 +90,7 @@ push model msg =
       model.local_history
 
     key =
-      ( List.length hist.session_history )
+      ( List.length hist.history )
 
     fresh_model =
       historyPush model key
@@ -138,10 +130,10 @@ within a tuple.
 getSessionState : Base
   -> ( List Int, Int, List Int, List Int )
 getSessionState base =
-  ( base.session_back
-  , base.session_current
-  , base.session_history
-  , base.session_next
+  ( base.back
+  , base.current
+  , base.history
+  , base.next
   )
 
 {-| Updates session history after record has
@@ -163,9 +155,9 @@ historyBack model remainder =
 
     fresh_history =
       { history
-      | session_back    = remainder
-      , session_current = fresh_current
-      , session_next    = cur :: next
+      | back    = remainder
+      , current = fresh_current
+      , next    = cur :: next
       }
   in
     { model | local_history = fresh_history }
@@ -184,10 +176,10 @@ historyPush model key =
 
     fresh_history =
       { history
-      | session_back    = key :: back
-      , session_current = key
-      , session_history = key :: hist
-      , session_next    = []
+      | back    = key :: back
+      , current = key
+      , history = key :: hist
+      , next    = []
       }
   in
     { model | local_history = fresh_history }

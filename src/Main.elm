@@ -88,10 +88,10 @@ renderHistory model =
   in
     div
       []
-      [ p [] [ text <| "Back: " ++ ( toString hist.session_back ) ]
-      , p [] [ text <| "Current: " ++ ( toString hist.session_current ) ]
-      , p [] [ text <| "History: " ++ ( toString hist.session_history ) ]
-      , p [] [ text <| "Next: " ++ ( toString hist.session_next ) ]
+      [ p [] [ text <| "Back: " ++ ( toString hist.back ) ]
+      , p [] [ text <| "Current: " ++ ( toString hist.current ) ]
+      , p [] [ text <| "History: " ++ ( toString hist.history ) ]
+      , p [] [ text <| "Next: " ++ ( toString hist.next ) ]
       ]
 
 view : Model -> Html Msg
