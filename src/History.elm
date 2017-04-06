@@ -2,6 +2,7 @@ module History exposing
   ( Base
   , History
   , back
+  -- , forward
   , init
   , push
   , revise
@@ -10,10 +11,14 @@ module History exposing
 {-| Full package description goes here
 
 # Types
-@docs History, Base
+@docs Base
+@docs History
 
 # Session Storage Utilities
-@docs back, init, push, revise
+@docs back
+@docs init
+@docs push
+@docs revise
 -}
 
 -- Core Dependencies
@@ -44,7 +49,7 @@ type alias History a =
 {-| Reverts model or record back to the it's most
 recent state.
 
-    History.back model
+    History.back model GoBack
 -}
 back : History a
   -> ( History a -> msg )
@@ -56,12 +61,43 @@ back model msg =
 
     fresh_model =
       historyBack model remainder
+
+    cmd =
+      if ( List.isEmpty model.local_history.back ) then
+        Cmd.none
+      else
+        Native.get key model False
+          |> Task.andThen (\ m -> restoreHistory m fresh_model )
+          |> Task.perform msg
   in
     fresh_model !
-    [ Native.get key model False
-      |> Task.andThen (\ m -> restoreHistory m fresh_model )
-      |> Task.perform msg
-    ]
+    [ cmd ]
+
+-- {-| Returns model from an older state to a newer state.
+--
+--     History.forward model GoForward
+-- -}
+-- forward : History a
+--   -> ( History a -> msg )
+--   -> ( History a, Cmd msg )
+-- forward model msg =
+--   let
+--     ( key, remainder ) =
+--       getBack model.local_history.back
+--
+--     fresh_model =
+--       historyBack model remainder
+--
+--     cmd =
+--       if ( List.isEmpty model.local_history.back ) then
+--         Cmd.none
+--       else
+--         Native.get key model False
+--           |> Task.andThen (\ m -> restoreHistory m fresh_model )
+--           |> Task.perform msg
+--   in
+--     fresh_model !
+--     [ cmd ]
 
 {-| Returns initial values that the
 local_history package relies upon
@@ -115,7 +151,8 @@ revise model =
 {-------------------------------}
 
 {-| Returns an integer representing the
-key of the storage entry.
+key of the storage entry, as well as a list
+of previous keys.
 -}
 getBack : List Int -> ( Int, List Int )
 getBack back =
@@ -123,6 +160,15 @@ getBack back =
     []      -> ( 0, [] )
     [ a ]   -> ( a, [] )
     a :: b  -> ( a, b )
+
+{-| Returns a list of keys that have already
+been visited.
+-}
+getNext : List Int -> Int -> List Int -> List Int
+getNext back cur next =
+  case back of
+    []  -> next
+    _   -> cur :: next
 
 {-| Returns each session value as items
 within a tuple.
@@ -150,14 +196,14 @@ historyBack model remainder =
     fresh_current =
       Maybe.withDefault 0 ( List.head remainder )
 
-    ( _, cur, _, next ) =
-      getSessionState model.local_history
+    ( back, cur, _, next ) =
+      getSessionState history
 
     fresh_history =
       { history
       | back    = remainder
       , current = fresh_current
-      , next    = cur :: next
+      , next    = getNext back cur next
       }
   in
     { model | local_history = fresh_history }
